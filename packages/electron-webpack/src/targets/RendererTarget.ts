@@ -83,7 +83,7 @@ export class BaseRendererTarget extends BaseTarget {
 
   async configurePlugins(configurator: WebpackConfigurator): Promise<void> {
     configurator.debug("Add ExtractTextPlugin plugin")
-    configurator.plugins.push(new MiniCssExtractPlugin({filename: `${configurator.type === "renderer-dll" ? "vendor" : "styles"}.css`}))
+    configurator.plugins.push(new MiniCssExtractPlugin({filename: `${configurator.type === "renderer-dll" ? "vendor" : "[name]-styles"}.css`}))
 
     // https://github.com/electron-userland/electrify/issues/1
     if (!configurator.isProduction) {
