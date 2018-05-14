@@ -120,6 +120,27 @@ Object {
 }
 `;
 
+exports[`main production 3`] = `
+"      Asset       Size  Chunks             Chunk Names
+    main.js  693 bytes       0  [emitted]  main
+main.js.map   1.09 KiB       0  [emitted]  main
+Entrypoint main = main.js main.js.map
+[0] ./src/main/index.js 0 bytes {0} [built]
+[1] multi ./src/main/index.js 28 bytes {0} [built]"
+`;
+
+exports[`main production 4`] = `
+Object {
+  "dist": Object {
+    "main": Object {
+      "main.js": "require(\\"source-map-support/source-map-support.js\\").install(),module.exports=function(e){var r={};function t(n){if(r[n])return r[n].exports;var o=r[n]={i:n,l:!1,exports:{}};return e[n].call(o.exports,o,o.exports,t),o.l=!0,o.exports}return t.m=e,t.c=r,t.d=function(e,r,n){t.o(e,r)||Object.defineProperty(e,r,{configurable:!1,enumerable:!0,get:n})},t.r=function(e){Object.defineProperty(e,\\"__esModule\\",{value:!0})},t.n=function(e){var r=e&&e.__esModule?function(){return e.default}:function(){return e};return t.d(r,\\"a\\",r),r},t.o=function(e,r){return Object.prototype.hasOwnProperty.call(e,r)},t.p=\\"\\",t(t.s=1)}([function(e,r){},function(e,r,t){e.exports=t(0)}]);
+//# sourceMappingURL=main.js.map",
+      "main.js.map": "{\\"version\\":3,\\"sources\\":[\\"webpack:///webpack/bootstrap\\"],\\"names\\":[\\"installedModules\\",\\"__webpack_require__\\",\\"moduleId\\",\\"exports\\",\\"module\\",\\"i\\",\\"l\\",\\"modules\\",\\"call\\",\\"m\\",\\"c\\",\\"d\\",\\"name\\",\\"getter\\",\\"o\\",\\"Object\\",\\"defineProperty\\",\\"configurable\\",\\"enumerable\\",\\"get\\",\\"r\\",\\"value\\",\\"n\\",\\"__esModule\\",\\"default\\",\\"object\\",\\"property\\",\\"prototype\\",\\"hasOwnProperty\\",\\"p\\",\\"s\\",\\"e\\",\\"t\\"],\\"mappings\\":\\"yFACA,IAAAA,KAGA,SAAAC,EAAAC,GAGA,GAAAF,EAAAE,GACA,OAAAF,EAAAE,GAAAC,QAGA,IAAAC,EAAAJ,EAAAE,IACAG,EAAAH,EACAI,KACAH,YAUA,OANAI,EAAAL,GAAAM,KAAAJ,EAAAD,QAAAC,IAAAD,QAAAF,GAGAG,EAAAE,KAGAF,EAAAD,QA2CA,OAtCAF,EAAAQ,EAAAF,EAGAN,EAAAS,EAAAV,EAGAC,EAAAU,EAAA,SAAAR,EAAAS,EAAAC,GACAZ,EAAAa,EAAAX,EAAAS,IACAG,OAAAC,eAAAb,EAAAS,GACAK,gBACAC,cACAC,IAAAN,KAMAZ,EAAAmB,EAAA,SAAAjB,GACAY,OAAAC,eAAAb,EAAA,cAAiDkB,YAIjDpB,EAAAqB,EAAA,SAAAlB,GACA,IAAAS,EAAAT,KAAAmB,WACA,WAA2B,OAAAnB,EAAAoB,SAC3B,WAAiC,OAAApB,GAEjC,OADAH,EAAAU,EAAAE,EAAA,IAAAA,GACAA,GAIAZ,EAAAa,EAAA,SAAAW,EAAAC,GAAsD,OAAAX,OAAAY,UAAAC,eAAApB,KAAAiB,EAAAC,IAGtDzB,EAAA4B,EAAA,GAIA5B,IAAA6B,EAAA,cAAAC,EAAAX,KAAA,SAAAW,EAAAX,EAAAY,GAAAD,EAAA5B,QAAA6B,EAAA\\",\\"file\\":\\"main.js\\",\\"sourceRoot\\":\\"\\"}",
+    },
+  },
+}
+`;
+
 exports[`renderer custom sourceDirectory 1`] = `
 "          Asset       Size  Chunks             Chunk Names
      styles.css  121 bytes       0  [emitted]  renderer

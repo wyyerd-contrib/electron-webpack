@@ -165,98 +165,131 @@ export class WebpackConfigurator {
   }
 
   async configure(entry?: { [key: string]: any } | null) {
-    this._configuration = {
-      context: this.projectDir,
-      devtool: this.isProduction || this.isTest ? "nosources-source-map" : "eval-source-map",
-      externals: this.computeExternals(),
-      node: {
-        __dirname: !this.isProduction,
-        __filename: !this.isProduction,
-      },
-      output: {
-        filename: "[name].js",
-        chunkFilename: "[name].bundle.js",
-        libraryTarget: "commonjs2",
-        path: path.join(this.commonDistDirectory, this.type)
-      },
-      target: this.isTest ? "node" : `electron-${this.type === "renderer-dll" ? "renderer" : this.type}` as any,
-      resolve: {
-        alias: {
-          "@": this.sourceDir,
-          common: this.commonSourceDirectory,
+    const customConfiguration = this.loadCustomConfig()
+    const disableMerge = this.isMergeDisabled()
+
+    if (customConfiguration && disableMerge) {
+      this._configuration = customConfiguration
+    } else if (!customConfiguration && disableMerge) {
+      throw new Error(`Webpack configuration merge is disabled for ${this.type}, but no custom configuration \
+\                      was loaded. Ensure that if disableWebpackMerge is set, a custom webpack.config is provided.`)
+    } else {
+      this._configuration = {
+        context: this.projectDir,
+        devtool: this.isProduction || this.isTest ? "nosources-source-map" : "eval-source-map",
+        externals: this.computeExternals(),
+        node: {
+          __dirname: !this.isProduction,
+          __filename: !this.isProduction,
         },
-        extensions: this.extensions,
-      },
-      module: {
-        rules: this.rules,
-      },
-      plugins: this.plugins,
-    }
-
-    if (entry != null) {
-      this._configuration.entry = entry
-    }
-
-    // if electronVersion not specified, use latest
-    this._electronVersion = this.electronWebpackConfiguration.electronVersion || await this.electronVersionPromise.value || "1.8.2"
-    const target = (() => {
-      switch (this.type) {
-        case "renderer": return new RendererTarget()
-        case "renderer-dll": return new BaseRendererTarget()
-        case "test": return new BaseRendererTarget()
-        case "main": return new MainTarget()
-        default: return new BaseTarget()
-      }
-    })()
-    this.debug(`Target class: ${target.constructor.name}`)
-    target.configureRules(this)
-    await Promise.all([target.configurePlugins(this), configureTypescript(this)])
-    configureVue(this)
-
-    if (this.debug.enabled) {
-      this.debug(`\n\n${this.type} config:` + JSON.stringify(this._configuration, null, 2) + "\n\n")
-    }
-
-    if (this.config.entry == null) {
-      this.entryFiles.push((await computeEntryFile(this.sourceDir, this.projectDir))!!)
-      this.config.entry = {
-        [this.type]: this.entryFiles,
+        output: {
+          filename: "[name].js",
+          chunkFilename: "[name].bundle.js",
+          libraryTarget: "commonjs2",
+          path: path.join(this.commonDistDirectory, this.type)
+        },
+        target: this.isTest ? "node" : `electron-${this.type === "renderer-dll" ? "renderer" : this.type}` as any,
+        resolve: {
+          alias: {
+            "@": this.sourceDir,
+            common: this.commonSourceDirectory,
+          },
+          extensions: this.extensions,
+        },
+        module: {
+          rules: this.rules,
+        },
+        plugins: this.plugins,
       }
 
-      const mainConfiguration = this.electronWebpackConfiguration.main || {}
-      let extraEntries = mainConfiguration.extraEntries
-      if (this.type === "main" && extraEntries != null) {
-        if (typeof extraEntries === "string") {
-          extraEntries = [extraEntries]
+      if (entry != null) {
+        this._configuration.entry = entry
+      }
+
+      // if electronVersion not specified, use latest
+      this._electronVersion = this.electronWebpackConfiguration.electronVersion || await this.electronVersionPromise.value || "1.8.2"
+      const target = (() => {
+        switch (this.type) {
+          case "renderer": return new RendererTarget()
+          case "renderer-dll": return new BaseRendererTarget()
+          case "test": return new BaseRendererTarget()
+          case "main": return new MainTarget()
+          default: return new BaseTarget()
+        }
+      })()
+      this.debug(`Target class: ${target.constructor.name}`)
+      target.configureRules(this)
+      await Promise.all([target.configurePlugins(this), configureTypescript(this)])
+      configureVue(this)
+
+      if (this.debug.enabled) {
+        this.debug(`\n\n${this.type} config:` + JSON.stringify(this._configuration, null, 2) + "\n\n")
+      }
+
+      if (this.config.entry == null) {
+        this.entryFiles.push((await computeEntryFile(this.sourceDir, this.projectDir))!!)
+        this.config.entry = {
+          [this.type]: this.entryFiles,
         }
 
-        if (Array.isArray(extraEntries)) {
-          for (const p of extraEntries) {
-            this.config.entry[path.basename(p, path.extname(p))] = p
+        const mainConfiguration = this.electronWebpackConfiguration.main || {}
+        let extraEntries = mainConfiguration.extraEntries
+        if (this.type === "main" && extraEntries != null) {
+          if (typeof extraEntries === "string") {
+            extraEntries = [extraEntries]
+          }
+
+          if (Array.isArray(extraEntries)) {
+            for (const p of extraEntries) {
+              this.config.entry[path.basename(p, path.extname(p))] = p
+            }
+          }
+          else {
+            Object.assign(this.config.entry, extraEntries)
           }
         }
-        else {
-          Object.assign(this.config.entry, extraEntries)
-        }
+      }
+
+      if (customConfiguration) {
+        this._configuration = merge.smart(this._configuration, customConfiguration)
       }
     }
-
-    this.applyCustomModifications()
 
     return this.config
   }
 
-  private applyCustomModifications() {
+  private isMergeDisabled(): boolean {
+    if (this.type === "renderer" || this.type === "renderer-dll") {
+      return this.electronWebpackConfiguration.renderer && this.electronWebpackConfiguration.renderer.disableWebpackMerge || false
+    } else if (this.type === "main") {
+      return this.electronWebpackConfiguration.main && this.electronWebpackConfiguration.main.disableWebpackMerge || false
+    } else {
+      return false
+    }
+  }
+
+  private loadCustomConfig(): Configuration | null {
+    let configPath: string | undefined
     if (this.type === "renderer" && this.electronWebpackConfiguration.renderer && this.electronWebpackConfiguration.renderer.webpackConfig) {
-      this._configuration = merge.smart(this._configuration!!, require(path.join(this.projectDir, this.electronWebpackConfiguration.renderer.webpackConfig)))
+      configPath = this.electronWebpackConfiguration.renderer.webpackConfig
     }
 
     if (this.type === "renderer-dll" && this.electronWebpackConfiguration.renderer && this.electronWebpackConfiguration.renderer.webpackDllConfig) {
-      this._configuration = merge.smart(this._configuration!!, require(path.join(this.projectDir, this.electronWebpackConfiguration.renderer.webpackDllConfig)))
+      configPath = this.electronWebpackConfiguration.renderer.webpackDllConfig
     }
 
     if (this.type === "main" && this.electronWebpackConfiguration.main && this.electronWebpackConfiguration.main.webpackConfig) {
-      this._configuration = merge.smart(this._configuration!!, require(path.join(this.projectDir, this.electronWebpackConfiguration.main.webpackConfig)))
+      configPath = this.electronWebpackConfiguration.main.webpackConfig
+    }
+
+    if (configPath) {
+      let config: Configuration | ((env: ConfigurationEnv) => Configuration) = require(path.join(this.projectDir, configPath))
+      if (typeof config === "function") {
+        config = config(this.env)
+      }
+      return config
+    } else {
+      return null
     }
   }
 
